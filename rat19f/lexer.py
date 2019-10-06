@@ -26,7 +26,7 @@ class Lexer:
         ]
         self.operators = [ '=', '>', '<', '+', '-', '*', '/']
         self.seperators = ['(', ')', '{', '}', ',', ';']
-        self.combination_operators = ['==', '\=', '=>', '<=']
+        self.combination_operators = ['==', '/=', '=>', '<=']
         self.combination_seperators = ['%%', '[*', '*]']
         self.whitespaces = [' ', '\t', '\n']
 
