@@ -19,7 +19,7 @@ def main():
     symbol_table.insert(0, ['Tokens', 'Lexemes'])
     symbol_table.insert(1, ['------', '-------'])
     col_width = max(len(val) for row in symbol_table for val in row) + 5  # padding
-    with open('output.txt', 'w') as f:
+    with open('lexer.out', 'w') as f:
         for row in symbol_table:
             line = "".join(val.ljust(col_width) for val in row)
             print(line)
