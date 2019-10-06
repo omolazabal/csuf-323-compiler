@@ -1,0 +1,10 @@
+[* this program swaps two numbers *]
+%%
+    int a = 7;
+    int b = 8;
+    int temp;
+    temp = a;
+    a = b;
+    b = temp;
+    put(temp);
+%%

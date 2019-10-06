@@ -1,0 +1,21 @@
+[* This program calculates the nth fibonacci number *]
+function fib(nterms int)
+{
+    int nth;
+    int n1 = 0;
+    int n2 = 0;
+    int count = 0;
+    while (count < nterms)
+    {
+        nth = n1 + n2;
+        n1 = n2;
+        n2 = nth;
+        count = count + 1;
+    }
+    return nth;
+}
+%%
+    int nth_fib;
+    get(nth_fib);
+    put(fib(nth_fib));
+%%
