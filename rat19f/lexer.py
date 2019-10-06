@@ -1,24 +1,30 @@
 
 class Lexer:
-    state    = None   # State table
-    colstr   = None   # Determine state table column
-    keywords = None   # List of keywords
+    state                  = None   # State table
+    colstr                 = None   # Determine state table column
+    keywords               = None   # List of keywords
+    operators              = None   # List of valid operators
+    seperators             = None   # List of valid seperators
+    combination_operators  = None   # List of valid combined operators
+    combination_seperators = None   # List of valid combined seperators
+    whitespaces            = None   # Types of whitespaces
 
     def __init__(self):
         self.state = [
         #    0  1  2  3  4 
             [1, 2, 5, 5, 5], # 0
-            [1, 1, 1, 5, 5], # 1  Identifier
-            [5, 2, 5, 3, 5], # 2  Integer
+            [1, 1, 1, 5, 5], # 1  Identifier end state
+            [5, 2, 5, 3, 5], # 2  Integer end state
             [5, 4, 5, 5, 5], # 3
-            [5, 4, 5, 5, 5], # 4  Real
+            [5, 4, 5, 5, 5], # 4  Real end state
             [5, 5, 5, 5, 5], # 5  
         ]
         self.colstr = [
-            'abcdefghijklmnopqrstuvwxyz',
-            '0123456789',
-            '_',
-            '.'
+            'abcdefghijklmnopqrstuvwxyz', # Alpha chars
+            '0123456789',                 # Digits
+            '_',                          # Underscores
+            '.'                           # Decimal point
+            # Last column is reserved if none of the above
         ]
         self.keywords = [
             'function', 'int', 'boolean', 'real', 'if', 'fi', 'otherwise',
@@ -31,21 +37,23 @@ class Lexer:
         self.whitespaces = [' ', '\t', '\n']
 
     def position(self, char):
+        '''Gets column position of char'''
         for i, col in enumerate(self.colstr):
             if char.lower() in col: return i
         return len(self.state[0]) - 1
 
     def scan(self, text):
-        lexemes = []
-        comments = []
-        symbol_table = lexemes
-
-        lex_state = 0  # Row of state table
-        currentp = 0  # Pointer to current character
-        startp = 0  # Token start pointer
+        '''Performs parsing, leveraging the state table'''
+        lexemes = []           # Table entries for lexemes
+        comments = []          # Table entries for comments, in case they serve a use for future
+        symbol_table = lexemes # The active table
+        lex_state = 0          # Row of state table
+        currentp = 0           # Pointer to current character
+        startp = 0             # Token start pointer
         token_class = ''
         while currentp < len(text):
-            currentc = text[currentp]  # Current character
+            # Scan text until EOF
+            currentc = text[currentp]      # Current character
             col = self.position(currentc)  # Column of state table
             lex_state = self.state[lex_state][col]
             if lex_state == 1:  # Potential identifier
@@ -67,10 +75,10 @@ class Lexer:
                     token = symbol_table[-1][1] + currentc
                     if token == '[*':
                         symbol_table.pop()
-                        symbol_table = comments
+                        symbol_table = comments  # Swap to comments table if ongoing comment
                     elif token == '*]':
                         symbol_table[-1] = ['seperator', token]
-                        symbol_table = lexemes
+                        symbol_table = lexemes  # Swap to lexemes table if comments stop
                     else:
                         symbol_table[-1] = ['seperator', token]
                 # Combination operators
@@ -91,6 +99,7 @@ class Lexer:
                     token = currentc
                     token_class = 'unknown'
                     symbol_table.append([token_class, token])
+                # Reset the state if no potential ending state
                 token_class = ''
                 lex_state = 0
             else:
@@ -100,9 +109,9 @@ class Lexer:
                 startp = currentp
 
         if token_class:
+            # Grab last remaining token
             symbol_table.append((token_class, token))
         symbol_table = lexemes
-
         return symbol_table
 
 
