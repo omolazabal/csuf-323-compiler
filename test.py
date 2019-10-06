@@ -1,4 +1,6 @@
 
+#!/usr/bin/env python3
+
 from rat19f import Lexer
 
 a = Lexer()

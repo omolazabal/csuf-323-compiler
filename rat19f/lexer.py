@@ -28,6 +28,7 @@ class Lexer:
         self.seperators = ['(', ')', '{', '}', ',', ';']
         self.combination_operators = ['==', '\=', '=>', '<=']
         self.combination_seperators = ['%%', '[*', '*]']
+        self.whitespaces = [' ', '\t', '\n']
 
     def position(self, char):
         for i, col in enumerate(self.colstr):
@@ -35,7 +36,10 @@ class Lexer:
         return len(self.state[0]) - 1
 
     def run(self, text):
-        symbol_table = []
+        lexemes = []
+        comments = []
+        symbol_table = lexemes
+
         lex_state = 0  # Row of state table
         currentp = 0  # Pointer to current character
         startp = 0  # Token start pointer
@@ -58,8 +62,19 @@ class Lexer:
                     'operator' if currentc in self.operators else \
                     'seperator' if currentc in self.seperators else \
                     ''
+                # Combination seperators
+                if len(symbol_table) and (symbol_table[-1][1] + currentc) in self.combination_seperators:
+                    token = symbol_table[-1][1] + currentc
+                    if token == '[*':
+                        symbol_table.pop()
+                        symbol_table = comments
+                    elif token == '*]':
+                        symbol_table[-1] = ['seperator', token]
+                        symbol_table = lexemes
+                    else:
+                        symbol_table[-1] = ['seperator', token]
                 # Combination operators
-                if selection is 'operator' and (symbol_table[-1][1] + currentc) in self.combination_operators:
+                elif selection is 'operator' and (symbol_table[-1][1] + currentc) in self.combination_operators:
                     symbol_table[-1][1] = symbol_table[-1][1] + currentc
                 # Single operators
                 elif selection:
@@ -68,7 +83,13 @@ class Lexer:
                     token = currentc
                     token_class = selection
                     symbol_table.append([token_class, token])
+                # Empty state
                 elif token_class:
+                    symbol_table.append([token_class, token])
+                # Unknown symbols
+                elif currentc not in self.whitespaces:
+                    token = currentc
+                    token_class = 'unknown'
                     symbol_table.append([token_class, token])
                 token_class = ''
                 lex_state = 0
@@ -80,6 +101,7 @@ class Lexer:
 
         if token_class:
             symbol_table.append((token_class, token))
+        symbol_table = lexemes
 
         for row in symbol_table:
             print(row)
