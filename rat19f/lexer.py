@@ -35,7 +35,7 @@ class Lexer:
             if char.lower() in col: return i
         return len(self.state[0]) - 1
 
-    def run(self, text):
+    def scan(self, text):
         lexemes = []
         comments = []
         symbol_table = lexemes

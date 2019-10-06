@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+
+import os
+
+lexer = ""
+with open('rat19f/lexer.py', 'r') as f:
+    lexer_content = f.read()
+
+
+program_start = """
+'''Start of Program'''
+def main():
+    import sys
+    filename = sys.argv[-1]
+    lexer = Lexer()
+    with open(filename, 'r') as f:
+        content = f.read()
+    symbol_table = lexer.scan(content)
+    symbol_table.insert(0, ['Tokens', 'Lexemes'])
+    symbol_table.insert(1, ['------', '-------'])
+    col_width = max(len(val) for row in symbol_table for val in row) + 5  # padding
+    with open('output.txt', 'w') as f:
+        for row in symbol_table:
+            line = "".join(val.ljust(col_width) for val in row)
+            print(line)
+            f.write(line + '\\n')
+if __name__ == '__main__':
+    main()
+"""
+
+
+with open('rat', 'w') as f:
+        f.write('#!/usr/bin/env python3\n')
+        f.write(lexer_content)
+        f.write(program_start)
+
+os.system('chmod +x rat')
