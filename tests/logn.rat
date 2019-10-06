@@ -1,0 +1,9 @@
+[* This program performs a loop of O(logN) *]
+%%
+    real n;
+    get(n);
+    real d = 0.5;
+    while (n>1) {
+        n = n*0.5;
+    }
+%%

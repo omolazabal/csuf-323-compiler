@@ -2,20 +2,42 @@
 function fib(nterms int)
 {
     int nth;
-    int n1 = 0;
-    int n2 = 0;
-    int count = 0;
-    while (count < nterms)
+    if (nterms => 0)  [* Gets nth term if valid input*]
     {
-        nth = n1 + n2;
-        n1 = n2;
-        n2 = nth;
-        count = count + 1;
+        int n1 = 0;
+        int n2 = 0;
+        int count = 0;
+        while (count < nterms)
+        {
+            nth = n1 + n2;
+            n1 = n2;
+            n2 = nth;
+            count = count + 1;
+        }
     }
+    otherwise
+    {
+        nth =  4; [* bad number, this isnt fibonacci!! ): *]
+    }
+    fi
     return nth;
 }
 %%
+    boolean print;
     int nth_fib;
     get(nth_fib);
-    put(fib(nth_fib));
+    int fnum = fib(nth_fib);
+    if (fnum == 4)
+    {
+        print = true;
+    }
+    otherwise
+    {
+        print = false;
+    }
+    fi
+    if (print)
+    {
+        put(fnum);
+    }
 %%

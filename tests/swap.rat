@@ -1,10 +1,14 @@
-[* this program swaps two numbers *]
+[* This program swaps two numbers *]
 %%
-    int a = 7;
-    int b = 8;
-    int temp;
-    temp = a;
-    a = b;
-    b = temp;
-    put(temp);
+    int a, b;
+    get(a, b);
+    if (a /= b)
+    {
+        int temp; [* For extra storage *]
+        temp = a;
+        a = b;
+        b = temp;
+    }
+    fi
+    put(a, b); [* whoo hoo swap! *]
 %%
