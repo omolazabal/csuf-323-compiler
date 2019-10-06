@@ -103,8 +103,7 @@ class Lexer:
             symbol_table.append((token_class, token))
         symbol_table = lexemes
 
-        for row in symbol_table:
-            print(row)
+        return symbol_table
 
 
 
