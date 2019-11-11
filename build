@@ -9,21 +9,18 @@ with open('rat19f/lexer.py', 'r') as f:
 
 program_start = """
 '''Start of Program'''
+
 def main():
     import sys
     filename = sys.argv[-1]
-    lexer = Lexer()
-    with open(filename, 'r') as f:
-        content = f.read()
-    symbol_table = lexer.scan(content)
-    symbol_table.insert(0, ['Tokens', 'Lexemes'])
-    symbol_table.insert(1, ['------', '-------'])
-    col_width = max(len(val) for row in symbol_table for val in row) + 5  # padding
+    lexer = Lexer(filename)
     with open('lexer.out', 'w') as f:
-        for row in symbol_table:
-            line = "".join(val.ljust(col_width) for val in row)
-            print(line)
-            f.write(line + '\\n')
+        f.write('{0:15}  {1}'.format('Tokens', 'Lexemes') + '\\n' + '-'*24 + '\\n')
+        print('{0:15}  {1}'.format('Tokens', 'Lexemes') + '\\n' + '-'*24)
+        for lexemes in lexer.scanner():
+            if lexemes:
+                f.write('{0:15}  {1}'.format(lexemes[0], lexemes[1]) + '\\n')
+                print('{0:15}  {1}'.format(lexemes[0], lexemes[1]))
 if __name__ == '__main__':
     main()
 """
