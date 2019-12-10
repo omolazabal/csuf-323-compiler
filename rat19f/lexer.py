@@ -68,6 +68,7 @@ class Lexer:
 
         with open(self.filename) as fileobj:
             for line_num, line in enumerate(fileobj):
+                ln = line_num + 1
                 for currentc in line:
                     col = self.position(currentc)
                     lex_state = self.state[lex_state][col]
@@ -76,7 +77,7 @@ class Lexer:
                     if not self.is_in_combination(currentc, second=True) and prev_op_sep:
                         # A single operator has been stored, and the combination instance does not exist
                         prev_op_sep = False
-                        if not comment: yield {'token': selection, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                        if not comment: yield {'token': selection, 'lexeme': lexeme, 'line': line, 'line_num': ln}
 
                     # Check the States
                     if lex_state == 1:
@@ -105,31 +106,31 @@ class Lexer:
                                 # Ignore output
                                 comment = True
                             elif lexeme == '*]':
-                                if not comment: yield {'token': 'separator', 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                                if not comment: yield {'token': 'separator', 'lexeme': lexeme, 'line': line, 'line_num': ln}
                                 comment = False
                             else:
-                                if not comment: yield {'token': 'separator', 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                                if not comment: yield {'token': 'separator', 'lexeme': lexeme, 'line': line, 'line_num': ln}
                         elif lexeme and selection is 'operator' and (lexeme + currentc) in self.combination_operators:
                             # Combination operators
                             prev_op_sep = False
                             lexeme = lexeme + currentc
-                            if not comment: yield {'token': 'operator', 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                            if not comment: yield {'token': 'operator', 'lexeme': lexeme, 'line': line, 'line_num': ln}
                         elif selection:
                             # Single operators & separators
                             if lexeme_class:
-                                if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                                if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': ln}
                             lexeme = currentc
                             lexeme_class = selection
                             prev_op_sep = True
                         # Empty state
                         elif lexeme_class:
-                            if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                            if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': ln}
                         # Unknown symbols
                         elif currentc not in self.whitespaces:
                             lexeme = currentc
                             lexeme_class = 'unknown'
                             if not self.is_in_combination(lexeme, first=True): 
-                                if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                                if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': ln}
                         # Reset the state if no potential ending state
                         lexeme_class = ''
                         lex_state = 0
@@ -140,5 +141,5 @@ class Lexer:
 
         if lexeme_class:
             # Grab last remaining lexeme
-            if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+            if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': ln}
 

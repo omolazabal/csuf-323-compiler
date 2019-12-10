@@ -49,8 +49,8 @@ def main():
             f.write('{0:10} {1:10} {2}'.format("Address", "Operation", "Operand") + '\\n')
             print('{0:10} {1:10} {2}'.format("Address", "Operation", "Operand"))
             for code in go.code_listing:
-                f.write('{0:10} {1:10} {2}'.format(str(code['address']), code['operation'], str(code['operand'])) + '\\n')
-                print('{0:10} {1:10} {2}'.format(str(code['address']), code['operation'], str(code['operand'])))
+                f.write('{0:10} {1:10} {2}'.format(str(code['address']), code['operation'], "" if code['operand'] is None else str(code['operand'])) + '\\n')
+                print('{0:10} {1:10} {2}'.format(str(code['address']), code['operation'], "" if code['operand'] is None else str(code['operand'])))
             f.write('\\n')
             print()
             f.write('{0:15} {1}'.format("Identifier", "Memory Location") + '\\n')

@@ -40,6 +40,7 @@ class CodeGenerator:
     def back_patch(self, jump_address):
         addr = self.jump_stack.pop()
         self.code_listing[addr - 1]['operand'] = jump_address
+        self.gen_instruction("LABEL", None)
 
     def next(self):
         self.current = next(self.lexer)
@@ -110,9 +111,13 @@ class CodeGenerator:
             
     def expression_prime(self):
         if self.current['lexeme'] == '+' or self.current['lexeme'] == '-':
+            op = self.current['lexeme']
             self.next()
             if self.term():
-                self.gen_instruction("ADD", None)
+                if op == '+':
+                    self.gen_instruction("ADD", None)
+                if op == '-':
+                    self.gen_instruction("SUB", None)
                 self.expression_prime()
             else:
                 raise SyntaxError('Expected term on line {}'.format(
@@ -129,9 +134,13 @@ class CodeGenerator:
 
     def term_prime(self):
         if self.current['lexeme'] == '*' or self.current['lexeme'] == '/':
+            op = self.current['lexeme']
             self.next()
             if self.factor():
-                self.gen_instruction("MUL", None)
+                if op == '*':
+                    self.gen_instruction("MUL", None)
+                elif op == '/':
+                    self.gen_instruction("DIV", None)
                 self.term_prime()
             else:
                 raise SyntaxError('Expected factor on line {}'.format(
@@ -200,7 +209,7 @@ class CodeGenerator:
             return False
 
     def statement(self):
-        if self.compound() or self.assign() or self.while_():
+        if self.compound() or self.assign() or self.while_() or self.if_() or self.scan() or self.print_():
             return True
         else:
             return False
@@ -261,8 +270,13 @@ class CodeGenerator:
         else:
             return False
 
-    def ID(self, from_declaration=False):
+    def ID(self, from_declaration=False, from_scan=False):
         if self.current['token'] == 'identifier':
+            if from_scan:
+                if not self.in_table(self.current['lexeme']):
+                    raise SyntaxError(f'{self.current["lexeme"]} is undefined')
+                self.gen_instruction("STDIN", None)
+                self.gen_instruction('POPM', self.get_address(self.current['lexeme']))
             if from_declaration:
                 if self.in_table(self.current['lexeme']):
                     raise SyntaxError(f'{self.current["lexeme"]} already declared')
@@ -354,12 +368,65 @@ class CodeGenerator:
         else:
             return False
 
+    def if_(self):
+        if self.current['lexeme'] == 'if':
+            addr = self.instruction_address()
+            self.next()
+            if self.current['lexeme'] == '(':
+                self.next()
+                if self.condition():
+                    if self.current['lexeme'] == ')':
+                        self.next()
+                        if self.statement():
+                            self.back_patch(self.instruction_address())
+                            if self.current['lexeme'] == 'otherwise':
+                                self.next()
+                                if self.statement():
+                                    if self.current['lexeme'] == 'fi':
+                                        self.next()
+                                        return True
+                                    else:
+                                        raise SyntaxError('Expected separator fi instead of {} {} on line {}'.format(
+                                                self.current['token'], 
+                                                self.current['lexeme'],
+                                                self.current['line_num']))
+                                else:
+                                    raise SyntaxError('Expected statement on line {}'.format(
+                                            self.current['line_num']))
+                            else:
+                                if self.current['lexeme'] == 'fi':
+                                    self.next()
+                                    return True
+                                else:
+                                    raise SyntaxError('Expected fi instead of {} {} on line {}'.format(
+                                            self.current['token'], 
+                                            self.current['lexeme'],
+                                            self.current['line_num']))
+                        else:
+                            raise SyntaxError('Expected statement on line {}'.format(
+                                    self.current['line_num']))
+                    else:
+                        raise SyntaxError('Expected ) instead of {} {} on line {}'.format(
+                                self.current['token'], 
+                                self.current['lexeme'],
+                                self.current['line_num']))
+                else:
+                    raise SyntaxError('Expected condition on line {}'.format(
+                            self.current['line_num']))
+            else:
+                raise SyntaxError('Expected separator ( instead of {} {} on line {}'.format(
+                        self.current['token'], 
+                        self.current['lexeme'],
+                        self.current['line_num']))
+        else:
+            return False
+
     def scan(self):
         if self.current['lexeme'] == 'get':
             self.next()
             if self.current['lexeme'] == '(':
                 self.next()
-                if self.ID():
+                if self.ID(from_scan=True):
                     if self.current['lexeme'] == ')':
                         self.next()
                         if self.current['lexeme'] == ';':
@@ -391,10 +458,11 @@ class CodeGenerator:
             self.next()
             if self.current['lexeme'] == '(':
                 self.next()
-                self.E()
+                self.expression()
                 if self.current['lexeme'] == ')':
                     self.next()
                     if self.current['lexeme'] == ';':
+                        self.gen_instruction("STDOUT", None)
                         self.next()
                         return True
                     else:
