@@ -1,7 +1,14 @@
+[*
+    max.rat
+    Assignment 3 sample code
+*]
+
 %%
 int i, max;
+
 i = 1;
 max = 4;
+
 while (i < max) {
     i = i + 1;
 }

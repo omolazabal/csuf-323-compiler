@@ -1,4 +1,21 @@
+[*
+    get_put.rat
+    Assignment 3 sample code
+*]
+
 %%
 int a, b, c;
+boolean d;
+
+a = 1;
+b = 2;
 if (a < b) a = c; fi
+
+d = 1;
+
+if (d == 0) {
+    c = a;
+} fi
+
+d = 1;
 %%

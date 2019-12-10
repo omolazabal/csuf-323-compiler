@@ -1,12 +1,35 @@
+
+[*
+    get_put.rat
+    Assignment 3 sample code
+*]
+
 %%
 int i, max, sum;
-boolean b;
+boolean x;
+
+x = 1;
 sum = 0;
 i = 1;
 get(max);
+
 while (i < max) {
     sum = sum + i;
     i = i + 1;
 }
+
 put(sum + max);
+
+get(i, max, sum);
+i = max / sum;
+i = i - sum;
+
+if (x == 1) {
+    i = i * max;
+    put(i);
+}
+otherwise {
+    i = i / max;
+    put(i);
+} fi
 %%

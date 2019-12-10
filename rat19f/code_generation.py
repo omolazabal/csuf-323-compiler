@@ -29,6 +29,13 @@ class CodeGenerator:
             'operand': operand
         })
 
+    def get_type(self, identifier):
+        if self.in_table(identifier):
+            return self.symbol_table[[row[0] for row in self.symbol_table].index(identifier)][2]
+        else:
+            raise SyntaxError(f'{identifier} is undefined')
+
+
     def instruction_address(self):
         return len(self.code_listing) + 1
 
@@ -75,11 +82,14 @@ class CodeGenerator:
 
     def assign(self):
         if self.current['token'] == 'identifier':
+            from_bool_assign = False
             save = self.current['lexeme']
+            if self.get_type(save) == 'boolean':
+                from_bool_assign = True
             self.next()
             if self.current['lexeme'] == '=':
                 self.next()
-                if self.expression():
+                if self.expression(from_bool_assign=from_bool_assign):
                     if self.current['lexeme'] == ';':
                         self.gen_instruction('POPM', self.get_address(save))
                         self.next()
@@ -102,8 +112,8 @@ class CodeGenerator:
         else:
             return False
 
-    def expression(self):
-        if self.term():
+    def expression(self, from_bool_assign=False):
+        if self.term(from_bool_assign=from_bool_assign):
             self.expression_prime()
             return True
         else:
@@ -126,8 +136,8 @@ class CodeGenerator:
         else:
             self.empty()
 
-    def term(self):
-        if self.factor():
+    def term(self, from_bool_assign=False):
+        if self.factor(from_bool_assign):
             self.term_prime()
             return True
         else:
@@ -149,20 +159,29 @@ class CodeGenerator:
         else:
             self.empty()
 
-    def factor(self):
+    def factor(self, from_bool_assign=False):
         if self.current['lexeme'] == '-':
+            if from_bool_assign:
+                raise SyntaxError('Type mismatch on line {}'.format(
+                        self.current['line_num']))
             self.next()
-        if self.primary():
+        if self.primary(from_bool_assign):
             return True
         raise SyntaxError('Expected identifier on line {}'.format(
                 self.current['line_num']))
 
-    def primary(self):
-        if self.current['token'] in ['integer'] or self.current['lexeme'] in ['true', 'false']:
+    def primary(self, from_bool_assign=False):
+        if self.current['token'] in ['integer']:
+            if from_bool_assign and int(self.current['lexeme']) > 1:
+                    raise SyntaxError('Type mismatch on line {}. Expected boolean'.format(
+                            self.current['line_num']))
             self.gen_instruction("PUSHI", self.current['lexeme'])
             self.next()
             return True
         elif self.current['token'] == 'identifier':
+            if from_bool_assign and get_type(self.current['lexeme']) != 'boolean':
+                    raise SyntaxError('Type mismatch on line {}. Expected boolean'.format(
+                            self.current['line_num']))
             self.gen_instruction("PUSHM", self.get_address(self.current['lexeme']))
             self.next()
             if self.current['lexeme'] == '(':
@@ -286,7 +305,7 @@ class CodeGenerator:
             self.next()
             if self.current['lexeme'] == ',':
                 self.next()
-                if not self.ID(from_declaration):
+                if not self.ID(from_declaration, from_scan):
                     raise SyntaxError('Expected identifier instead of {} {} on line {}'.format(
                             self.current['token'], 
                             self.current['lexeme'],
