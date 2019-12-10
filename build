@@ -44,10 +44,7 @@ def main():
         lexer = Lexer(filename)
         go = CodeGenerator(lexer.scanner())
         ex = ''
-        try:
-            go.rat19f()
-        except Exception as e:
-            print(str(e))
+        go.rat19f()
         with open('generator.out', 'w') as f:
             for code in go.code_listing:
                 f.write(str(code['address']) + ' ' + code['operation'] + ' ' + str(code['operand']) + '\\n')

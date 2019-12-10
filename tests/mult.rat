@@ -1,4 +1,6 @@
 %%
-int i, max, sum;
-sum = 0;
+int i, max;
+i = 1;
+max = 4;
+while (i < max) i = i + 1;
 %%

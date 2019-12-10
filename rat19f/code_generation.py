@@ -28,8 +28,18 @@ class CodeGenerator:
             'operand': operand
         })
 
+    def instruction_address(self):
+        return len(self.code_listing) + 1
+
     def get_address(self, identifier):
-        return self.symbol_table[[row[0] for row in self.symbol_table].index(identifier)][1]
+        if self.in_table(identifier):
+            return self.symbol_table[[row[0] for row in self.symbol_table].index(identifier)][1]
+        else:
+            raise SyntaxError(f'{identifier} is undefined')
+
+    def back_patch(self, jump_address):
+        addr = self.jump_stack.pop()
+        self.code_listing[addr - 1]['operand'] = jump_address
 
     def next(self):
         self.current = next(self.lexer)
@@ -190,7 +200,7 @@ class CodeGenerator:
             return False
 
     def statement(self):
-        if self.compound() or self.assign():
+        if self.compound() or self.assign() or self.while_():
             return True
         else:
             return False
@@ -227,7 +237,7 @@ class CodeGenerator:
 
     def declaration(self):
         if self.qualifier():
-            if self.ID():
+            if self.ID(from_declaration=True):
                 return True
         return False
 
@@ -251,13 +261,16 @@ class CodeGenerator:
         else:
             return False
 
-    def ID(self):
+    def ID(self, from_declaration=False):
         if self.current['token'] == 'identifier':
-            self.table_insert(self.current['lexeme'])
+            if from_declaration:
+                if self.in_table(self.current['lexeme']):
+                    raise SyntaxError(f'{self.current["lexeme"]} already declared')
+                self.table_insert(self.current['lexeme'])
             self.next()
             if self.current['lexeme'] == ',':
                 self.next()
-                if not self.ID():
+                if not self.ID(from_declaration):
                     raise SyntaxError('Expected identifier instead of {} {} on line {}'.format(
                             self.current['token'], 
                             self.current['lexeme'],
@@ -267,6 +280,77 @@ class CodeGenerator:
             else:
                 self.empty()
                 return True
+        else:
+            return False
+
+    def while_(self):
+        if self.current['lexeme'] == 'while':
+            addr = self.instruction_address()
+            self.gen_instruction("LABEL", None)
+            self.next()
+            if self.current['lexeme'] == '(':
+                self.next()
+                if self.condition():
+                    if self.current['lexeme'] == ')':
+                        self.next()
+                        if self.statement():
+                            self.gen_instruction("JUMP", addr)
+                            self.back_patch(self.instruction_address())
+                            return True
+                        else:
+                            raise SyntaxError('Expected statement on line {}'.format(
+                                    self.current['token'], 
+                                    self.current['lexeme'],
+                                    self.current['line_num']))
+                    else:
+                        raise SyntaxError('Expected separator ) instead of {} {} on line {}'.format(
+                                self.current['token'], 
+                                self.current['lexeme'],
+                                self.current['line_num']))
+                else:
+                    raise SyntaxError('Expected condition on line {}'.format(
+                            self.current['line_num']))
+            else:
+                raise SyntaxError('Expected separator ( instead of {} {} on line {}'.format(
+                        self.current['token'], 
+                        self.current['lexeme'],
+                        self.current['line_num']))
+        else:
+            return False
+
+    def condition(self):
+        if self.expression():
+            if self.relop():
+                op = self.current['lexeme']
+                self.next()
+                if self.expression():
+                    if op == '<':
+                        self.gen_instruction("LES", None)
+                    elif op == '>':
+                        self.gen_instruction("GRT", None)
+                    elif op == '==':
+                        self.gen_instruction("EQU", None)
+                    elif op == '/=':
+                        self.gen_instruction("NEQ", None)
+                    elif op == '=>':
+                        self.gen_instruction("GEQ", None)
+                    elif op == '<=':
+                        self.gen_instruction("LEQ", None)
+                    self.jump_stack.append(self.instruction_address())
+                    self.gen_instruction("JUMPZ", None)
+                    return True
+                else:
+                    raise SyntaxError('Expected expression on line {}'.format(
+                            self.current['line_num']))
+            else:
+                raise SyntaxError('Expected replop on line {}'.format(
+                        self.current['line_num']))
+        else:
+            return False
+
+    def relop(self):
+        if self.current['lexeme'] in ['==', '/=', '>', '<', '=>', '<=']:
+            return True
         else:
             return False
 
