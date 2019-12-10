@@ -8,6 +8,9 @@ with open('rat19f/lexer.py', 'r') as f:
 with open('rat19f/syntax_analyzer.py', 'r') as f:
     sa_content = f.read()
 
+with open('rat19f/code_generation.py', 'r') as f:
+    go_content = f.read()
+
 program_start = """
 '''Start of Program'''
 
@@ -37,6 +40,24 @@ def main():
             for output in stack:
                 f.write(output + '\\n')
                 print(output)
+    elif program == 'generator':
+        lexer = Lexer(filename)
+        go = CodeGenerator(lexer.scanner())
+        ex = ''
+        try:
+            go.rat19f()
+        except Exception as e:
+            print(str(e))
+        with open('generator.out', 'w') as f:
+            for code in go.code_listing:
+                f.write(str(code['address']) + ' ' + code['operation'] + ' ' + str(code['operand']) + '\\n')
+                print(str(code['address']) + ' ' + code['operation'] + ' ' + str(code['operand']))
+            f.write('\\n')
+            print()
+            for row in go.symbol_table:
+                f.write(row[0] + ' ' + str(row[1]) + '\\n')
+                print(row[0] + ' ' + str(row[1]))
+        
 
 if __name__ == '__main__':
     main()
@@ -47,6 +68,7 @@ with open('rat', 'w') as f:
         f.write('#!/usr/bin/env python3\n')
         f.write(lexer_content)
         f.write(sa_content)
+        f.write(go_content)
         f.write(program_start)
 
 os.system('chmod +x rat')

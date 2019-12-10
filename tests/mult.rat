@@ -1,0 +1,4 @@
+%%
+int i, max, sum;
+sum = 0;
+%%
