@@ -10,13 +10,13 @@ class CodeGenerator:
     def __init__(self, lexer):
         self.lexer = lexer
         self.current = {'token': '', 'lexeme': '', 'line_num': '', 'line': ''}
-        self.symbol_table = [['Identifier', 'Memory Location']]
+        self.symbol_table = []
         self.jump_stack = []
         self.code_listing = []
         self.address_start = 5000
 
     def table_insert(self, identifier):
-        self.symbol_table.append([identifier, len(self.symbol_table) + self.address_start - 1])
+        self.symbol_table.append([identifier, len(self.symbol_table) + self.address_start])
 
     def in_table(self, identifier):
         return identifier in [row[0] for row in self.symbol_table]

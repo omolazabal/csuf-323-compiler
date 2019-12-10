@@ -2,5 +2,7 @@
 int i, max;
 i = 1;
 max = 4;
-while (i < max) i = i + 1;
+while (i < max) {
+    i = i + 1;
+}
 %%
