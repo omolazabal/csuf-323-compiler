@@ -14,9 +14,10 @@ class CodeGenerator:
         self.jump_stack = []
         self.code_listing = []
         self.address_start = 5000
+        self.declaration_type = None
 
     def table_insert(self, identifier):
-        self.symbol_table.append([identifier, len(self.symbol_table) + self.address_start])
+        self.symbol_table.append([identifier, len(self.symbol_table) + self.address_start, self.declaration_type])
 
     def in_table(self, identifier):
         return identifier in [row[0] for row in self.symbol_table]
@@ -216,6 +217,7 @@ class CodeGenerator:
 
     def qualifier(self):
         if self.current['lexeme'] in ['int', 'boolean']:
+            self.declaration_type = self.current['lexeme']
             self.next()
             return True
         else:
