@@ -1,15 +1,4 @@
 
-class Set:
-    def __init__(self, comment=False):
-        self.comment = comment
-
-    def values(self, *args):
-        if not self.comment:
-            return tuple(args)
-        else:
-            return None
-
-
 class Lexer:
     state                  = None   # State table
     colstr                 = None   # Determine state table column
@@ -48,6 +37,9 @@ class Lexer:
         self.combination_separators = ['%%', '[*', '*]']
         self.whitespaces = [' ', '\t', '\n']
 
+    def __iter__(self):
+        return self.scanner()
+
     def position(self, char):
         '''Gets column position of char'''
         for i, col in enumerate(self.colstr):
@@ -64,90 +56,89 @@ class Lexer:
             return (char in [op[1] for op in self.combination_operators]) or (char in [sp[1] for sp in self.combination_separators])
         return False
 
-
     def scanner(self):
         '''Performs parsing, leveraging the state table'''
         prev_op_sep = False
         lex_state = 0          # Row of state table
         currentp = 0           # Pointer to current character
-        token = ''
-        token_class = ''
-        current_token = []
-        set_ = Set()
+        lexeme = ''
+        lexeme_class = ''
+        current_lexeme = []
+        comment = False
 
         with open(self.filename) as fileobj:
-            for line in fileobj:
+            for line_num, line in enumerate(fileobj):
                 for currentc in line:
                     col = self.position(currentc)
                     lex_state = self.state[lex_state][col]
-                    current_token.append(currentc)
+                    current_lexeme.append(currentc)
 
                     if not self.is_in_combination(currentc, second=True) and prev_op_sep:
                         # A single operator has been stored, and the combination instance does not exist
                         prev_op_sep = False
-                        yield set_.values(selection, token)
+                        if not comment: yield {'token': selection, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
 
                     # Check the States
                     if lex_state == 1:
                         # Potential identifier
-                        token = ''.join(current_token)
-                        token_class = 'keyword' if token in self.keywords else 'identifier'
+                        lexeme = ''.join(current_lexeme)
+                        lexeme_class = 'keyword' if lexeme in self.keywords else 'identifier'
                     elif lex_state == 2:
                         # Potential integer
-                        token = ''.join(current_token)
-                        token_class = 'integer'
+                        lexeme = ''.join(current_lexeme)
+                        lexeme_class = 'integer'
                     elif lex_state == 4:
                         # Potential real
-                        token = ''.join(current_token)
-                        token_class = 'real'
+                        lexeme = ''.join(current_lexeme)
+                        lexeme_class = 'real'
                     elif lex_state == 5:
                         # Other cases (operator, separator, unknowns, comments, etc)
                         selection = \
                             'operator' if currentc in self.operators else \
                             'separator' if currentc in self.separators else \
                             ''
-                        if token and (token + currentc) in self.combination_separators:
+                        if lexeme and (lexeme + currentc) in self.combination_separators:
                             # Combination separators
                             prev_op_sep = False
-                            token = token + currentc
-                            if token == '[*':
+                            lexeme = lexeme + currentc
+                            if lexeme == '[*':
                                 # Ignore output
-                                set_.comment = True
-                            elif token == '*]':
-                                yield set_.values('separator', token)
-                                set_.comment =  False
+                                comment = True
+                            elif lexeme == '*]':
+                                if not comment: yield {'token': 'separator', 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                                comment = False
                             else:
-                                yield set_.values('separator', token)
-                        elif token and selection is 'operator' and (token + currentc) in self.combination_operators:
+                                if not comment: yield {'token': 'separator', 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                        elif lexeme and selection is 'operator' and (lexeme + currentc) in self.combination_operators:
                             # Combination operators
                             prev_op_sep = False
-                            token = token + currentc
-                            yield set_.values('operator', token)
+                            lexeme = lexeme + currentc
+                            if not comment: yield {'token': 'operator', 'lexeme': lexeme, 'line': line, 'line_num': line_num}
                         elif selection:
                             # Single operators & separators
-                            if token_class:
-                                yield set_.values(token_class, token)
-                            token = currentc
-                            token_class = selection
+                            if lexeme_class:
+                                if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
+                            lexeme = currentc
+                            lexeme_class = selection
                             prev_op_sep = True
                         # Empty state
-                        elif token_class:
-                            yield set_.values(token_class, token)
+                        elif lexeme_class:
+                            if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
                         # Unknown symbols
                         elif currentc not in self.whitespaces:
-                            token = currentc
-                            token_class = 'unknown'
-                            if not self.is_in_combination(token, first=True): 
-                                yield set_.values(token_class, token)
+                            lexeme = currentc
+                            lexeme_class = 'unknown'
+                            if not self.is_in_combination(lexeme, first=True): 
+                                if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
                         # Reset the state if no potential ending state
-                        token_class = ''
+                        lexeme_class = ''
                         lex_state = 0
                     else:
-                        token_class = ''
+                        lexeme_class = ''
                     if lex_state == 0:
-                        current_token.clear()
+                        current_lexeme.clear()
 
-        if token_class:
-            # Grab last remaining token
-            yield set_.values(token_class, token)
+        if lexeme_class:
+            # Grab last remaining lexeme
+            if not comment: yield {'token': lexeme_class, 'lexeme': lexeme, 'line': line, 'line_num': line_num}
 

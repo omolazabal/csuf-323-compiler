@@ -2,10 +2,11 @@
 
 import os
 
-lexer = ""
 with open('rat19f/lexer.py', 'r') as f:
     lexer_content = f.read()
 
+with open('rat19f/syntax_analyzer.py', 'r') as f:
+    sa_content = f.read()
 
 program_start = """
 '''Start of Program'''
@@ -13,14 +14,30 @@ program_start = """
 def main():
     import sys
     filename = sys.argv[-1]
-    lexer = Lexer(filename)
-    with open('lexer.out', 'w') as f:
-        f.write('{0:15}  {1}'.format('Tokens', 'Lexemes') + '\\n' + '-'*24 + '\\n')
-        print('{0:15}  {1}'.format('Tokens', 'Lexemes') + '\\n' + '-'*24)
-        for lexemes in lexer.scanner():
-            if lexemes:
-                f.write('{0:15}  {1}'.format(lexemes[0], lexemes[1]) + '\\n')
-                print('{0:15}  {1}'.format(lexemes[0], lexemes[1]))
+    program = sys.argv[-2]
+    if program == 'lexer':
+        lexer = Lexer(filename)
+        with open('lexer.out', 'w') as f:
+            f.write('{0:15}  {1}'.format('Tokens', 'Lexemes') + '\\n' + '-'*24 + '\\n')
+            print('{0:15}  {1}'.format('Tokens', 'Lexemes') + '\\n' + '-'*24)
+            for vals in lexer:
+                f.write('{0:15}  {1}'.format(vals['token'], vals['lexeme']) + '\\n')
+                print('{0:15}  {1}'.format(vals['token'], vals['lexeme']))
+    elif program == 'syntax':
+        lexer = Lexer(filename)
+        syntax_analyzer = SyntaxAnalyzer(lexer.scanner())
+        ex = ''
+        try:
+            syntax_analyzer.rat19f()
+        except Exception as e:
+            ex = str(e)
+        stack = syntax_analyzer.output
+        stack.append(ex)
+        with open('syntax.out', 'w') as f:
+            for output in stack:
+                f.write(output + '\\n')
+                print(output)
+
 if __name__ == '__main__':
     main()
 """
@@ -29,6 +46,7 @@ if __name__ == '__main__':
 with open('rat', 'w') as f:
         f.write('#!/usr/bin/env python3\n')
         f.write(lexer_content)
+        f.write(sa_content)
         f.write(program_start)
 
 os.system('chmod +x rat')
