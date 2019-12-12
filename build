@@ -53,7 +53,7 @@ def main():
                 print('{0:10} {1:10} {2}'.format(str(code['address']), code['operation'], "" if code['operand'] is None else str(code['operand'])))
             f.write('\\n')
             print()
-            f.write('{0:15} {1:20}, {2}'.format("Identifier", "Memory Location", "Type") + '\\n')
+            f.write('{0:15} {1:20} {2}'.format("Identifier", "Memory Location", "Type") + '\\n')
             print('{0:15} {1:20} {2}'.format("Identifier", "Memory Location", "Type"))
             for row in go.symbol_table:
                 f.write('{0:15} {1:20} {2}'.format(row[0], str(row[1]), row[2]) + '\\n')
